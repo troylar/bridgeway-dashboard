@@ -15,8 +15,6 @@ driver = webdriver.Chrome('/usr/local/bin/chromedriver',chrome_options=chrome_op
 print('loading page')
 driver.get ('https://learn.homeschoolacademy.com/index.cfm')
 driver.execute_script("changeTab('L')")
-driver.find_element_by_id('txtusername').send_keys('')
-driver.find_element_by_id ('txtpassword').send_keys('')
 elem = driver.find_element_by_name('txtpassword')
 print('logging in')
 elem.send_keys(Keys.RETURN)
@@ -26,8 +24,11 @@ corner_boxes = driver.find_elements_by_class_name('cornerBox')
 for corner_box in corner_boxes:
     onclick = corner_box.get_attribute('onclick')
     if onclick and onclick.startswith("javascript:location.href='index.cfm/pg/MySchool/s/mycourses"):
-        print('Found courses link . . . navigating')
-        corner_box.click()
+        match = re.search(r'location.href=[\'"]?([^\'" >]+)', onclick)
+        url = match.group(1)
+        print('Found courses link . . . navigating to https://{}'.format(url))
+        driver.get('https://learn.homeschoolacademy.com/{}'.format(url))
+        break
 urls = []
 view_progress_links = driver.find_elements_by_link_text('view progress')
 
@@ -57,6 +58,7 @@ for url in urls:
             subject = c.text
             print('Getting data for {}'.format(subject))
             data[subject] = {}
+            data[subject]['assignments'] = {}
         if i == 3:
             data[subject]['percentage'] = c.text
         if i == 4:
@@ -81,7 +83,7 @@ for url in urls:
                 if not date:
                     date = "X"
             i = i + 1
-            data[subject][assignment] = date
+            data[subject]['assignments'][assignment] = date
     pp = pprint.PrettyPrinter()
     pp.pprint(data[subject])
 with open('data.json', 'w') as outfile:
