@@ -66,13 +66,14 @@ def generate_subject_widget(subject):
                 'Last activity: {}'.format(latest_date_a.format('ddd, MMM D'))),
             html.P(latest_date_a.shift(days=+1).humanize(), className="humanized_date"),
             html.H5(
-                s['grade'] + '%'
+                '{} Completed'.format(s['percentage'])),
+            html.H5(
+                'Current Grade: {}'.format(s['grade'] + '%')),
+            html.H5(
+                'Done Today: {}'.format(done[subject]['day'])
             ),
             html.H5(
-                'Today: {}'.format(done[subject]['day'])
-            ),
-            html.H5(
-                'Week: {}'.format(done[subject]['week'])
+                'Done This Week: {}'.format(done[subject]['week'])
             )
         ], className="two columns")
 

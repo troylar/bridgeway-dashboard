@@ -6,6 +6,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
+import os
 
 chrome_options = Options()
 chrome_options.add_argument('--headless')
@@ -15,6 +16,8 @@ driver = webdriver.Chrome('/usr/local/bin/chromedriver',chrome_options=chrome_op
 print('loading page')
 driver.get ('https://learn.homeschoolacademy.com/index.cfm')
 driver.execute_script("changeTab('L')")
+driver.find_element_by_id('txtusername').send_keys(os.environ.get('BRIDGEWAY_USERNAME'))
+driver.find_element_by_id ('txtpassword').send_keys(os.environ.get('BRIDGEWAY_PASSWORD'))
 elem = driver.find_element_by_name('txtpassword')
 print('logging in')
 elem.send_keys(Keys.RETURN)
