@@ -4,17 +4,20 @@ import dash_core_components as dcc
 import dash_html_components as html
 import json
 import datetime
+import arrow
+import os.path, time
 from dateutil.parser import parse
-ignore_subjects = [u'Personal and Family Finance', u'Orientation - High School Stud', u'Chinese Mandarin Course 2', u'HS Physical Education', u'State History Report']
+ignore_subjects = [u'WordBuild Elements 1',u'Personal and Family Finance', u'Orientation - High School Stud', u'Chinese Mandarin Course 2', u'HS Physical Education', u'State History Report']
 today = datetime.datetime.today().date()
 start_week = today - datetime.timedelta(today.weekday())
 end_week = start_week + datetime.timedelta(6)
-with open('data.json') as f:
+file = 'data.json'
+last_modified = parse(time.ctime(os.path.getmtime(file)))
+with open(file) as f:
      data = json.load(f)
 for s in ignore_subjects:
     del data[s]
 subjects = data.keys()
-print(subjects)
 grades = []
 completion = []
 done = {}
@@ -34,6 +37,7 @@ for subject in subjects:
         completion.append(int(data[subject]['percentage'].strip('%')))
     except ValueError:
         completion.append(0)
+    latest_date = parse('1/1/2000')
     for a in assignments:
         dt = assignments[a]
         if not dt == 'X':
@@ -42,78 +46,55 @@ for subject in subjects:
                 done[subject]['day'] = done[subject]['day'] + 1
             if date.date() < end_week and date.date() > start_week:
                 done[subject]['week'] = done[subject]['week'] + 1
+            if date > latest_date:
+                latest_date = date
     today_d.append(done[subject]['day'])
     week_d.append(done[subject]['week'])
+    s['latest_date'] = latest_date
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 def generate_subject_widget(subject):
-    return html.Div(
+    s = data[subject]
+    latest_date_a = arrow.get(s['latest_date'])
+    return html.Div(children=
         [
-            html.H1(
-                subject,
-                className="twelve columns"
+            html.H4(
+                subject
             ),
-            html.H2(
-                s['grade']
+            html.P(
+                'Last activity: {}'.format(latest_date_a.format('ddd, MMM D'))),
+            html.P(latest_date_a.shift(days=+1).humanize(), className="humanized_date"),
+            html.H5(
+                s['grade'] + '%'
+            ),
+            html.H5(
+                'Today: {}'.format(done[subject]['day'])
+            ),
+            html.H5(
+                'Week: {}'.format(done[subject]['week'])
             )
-        ],
-        className="twelve columns")
+        ], className="two columns")
 
 def grade_widgets():
     div = []
+    print('Getting subject widgets')
     for subject in subjects:
-        print(subject)
-        div.append(generate_subject_widget(data[subject]))
+        div.append(generate_subject_widget(subject))
     return div
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
-app.layout = html.Div(children=[
-     html.Div(grade_widgets() +
-         [
-        html.Div([
-            dcc.Graph(
-                id='completion-level',
-                figure={
-                    'data': [
-                        {'x': subjects, 'y': completion, 'type': 'bar', 'name': 'Completion'},
-                    ],
-                    'layout': {
-                        'title': 'Class Completion Level'
-                    }
-                }
-            )
-            ], className="six columns"),
-
-        html.Div([
-    dcc.Graph(
-        id='completed-today',
-        figure={
-            'data': [
-                {'x': subjects, 'y': today_d, 'type': 'bar', 'name': 'Done Today'},
-            ],
-            'layout': {
-                'title': 'Assignments Completed Today'
-            }
-        }
-    )
-            ], className="six columns"),
-        html.Div([
-   dcc.Graph(
-            id='completed-this-week',
-            figure={
-                'data': [
-                    {'x': subjects, 'y': week_d, 'type': 'bar', 'name': 'Done This Week'},
-                ],
-                'layout': {
-                    'title': 'Assignments Completed This Week'
-                }
-            }
-        )
-            ], className="six columns"),
-   ], className="row")
-])
+app.css.append_css({"external_url": 'https://fonts.googleapis.com/css?family=Roboto'})
+app.layout = html.Div(children=
+     [
+         html.Div(children=[
+             html.H1("Chloe's School Year 2018-2019"),
+             html.H3('Last Updated: {}'.format(arrow.get(last_modified).humanize()))
+         ]),
+         html.Div(children=grade_widgets())
+     ],
+     className="row"
+)
 
 if __name__ == '__main__':
     app.run_server(debug=True, host='10.20.100.203')
