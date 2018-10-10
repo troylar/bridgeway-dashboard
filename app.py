@@ -47,10 +47,31 @@ for subject in subjects:
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
+def generate_subject_widget(subject):
+    return html.Div(
+        [
+            html.H1(
+                subject,
+                className="twelve columns"
+            ),
+            html.H2(
+                s['grade']
+            )
+        ],
+        className="twelve columns")
+
+def grade_widgets():
+    div = []
+    for subject in subjects:
+        print(subject)
+        div.append(generate_subject_widget(data[subject]))
+    return div
+
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.layout = html.Div(children=[
-     html.Div([
+     html.Div(grade_widgets() +
+         [
         html.Div([
             dcc.Graph(
                 id='completion-level',
