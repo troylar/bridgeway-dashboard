@@ -43,8 +43,8 @@ for url in urls:
     subject = None
     print('Going to View Progress page: {}'.format(url))
     driver.get(url)
-    print('sleeping for 5')
-    time.sleep(5)
+    print('sleeping for 10')
+    time.sleep(10)
     table = driver.find_element_by_class_name("black")
     rows = table.find_elements_by_tag_name("tr")
     for row in rows:
