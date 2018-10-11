@@ -3,6 +3,7 @@ import dash
 import dash_html_components as html
 import json
 import datetime
+from datetime import date, timedelta
 import arrow
 import os.path
 import time
@@ -16,8 +17,9 @@ ignore_subjects = [u'WordBuild Elements 1',
                    u'Chinese Mandarin Course 2',
                    u'HS Physical Education',
                    u'State History Report']
-today = datetime.datetime.today().date()
-start_week = today - datetime.timedelta(today.weekday())
+today = date.today() 
+offset = (today.weekday() - 3) % 7
+start_week = today - timedelta(days=offset)
 end_week = start_week + datetime.timedelta(6)
 file = 'data.json'
 last_modified = arrow.get(parse(time.ctime(os.path.getmtime(file)))).replace(tzinfo='local')
@@ -25,7 +27,8 @@ last_modified = arrow.get(parse(time.ctime(os.path.getmtime(file)))).replace(tzi
 with open(file) as f:
     data = json.load(f)
 for s in ignore_subjects:
-    del data[s]
+    if s in data:
+        del data[s]
 subjects = data.keys()
 grades = []
 completion = []
@@ -51,6 +54,8 @@ for subject in subjects:
     highest_unit = 0
     total_units = 0
     completed_units = {}
+    s['units_this_week'] = 0
+    unit_done_dates = {}
     for a in assignments:
         m = re.match('^([0-9]+)\.([0-9]+)', a)
         if not m:
@@ -70,6 +75,12 @@ for subject in subjects:
                 done[subject]['week'] = done[subject]['week'] + 1
             if date > latest_date:
                 latest_date = date
+            if unit not in unit_done_dates:
+                unit_done_dates[unit] = date.date()
+            else:
+                if date.date() > unit_done_dates[unit]:
+                    unit_done_dates[unit] = date.date()
+
         completed_units[unit] = completed_units[unit] and assignment_complete
         if int(unit) > highest_unit:
             highest_unit = int(unit)
@@ -79,9 +90,13 @@ for subject in subjects:
     s['latest_date'] = latest_date
     s['latest_unit'] = 0
     s['highest_unit'] = highest_unit
+    total_units_this_week = 0
     for unit in completed_units:
         if completed_units[unit]:
             s['latest_unit'] = unit
+            if unit_done_dates[unit] < end_week and unit_done_dates[unit] > start_week:
+                s['units_this_week'] = s['units_this_week'] + 1
+                total_units_this_week = total_units_this_week + 1
     s['completion_date'] = arrow.now().shift(weeks=+(highest_unit - int(s['latest_unit'])))
 
 
@@ -113,9 +128,12 @@ def generate_subject_widget(subject):
                 'Latest Unit: {} of {}'.format(s['latest_unit'], s['highest_unit'])
             ),
             html.H5(
+                'Units This Week: {}'.format(s['units_this_week'])
+            ),
+            html.H5(
                 'Est Completion: {}'.format(s['completion_date'].format('MMM D, YYYY'))
             ),
-        ], className="two columns")
+        ], className="four columns")
 
 
 def grade_widgets():
@@ -132,12 +150,14 @@ app.layout = html.Div(children=
      [
          html.Div(children=[
              html.H1("Chloe's School Year 2018-2019"),
-             html.H3('Last Updated: {}'.format(arrow.get(last_modified).humanize()))
+             html.H4('Last Updated: {}'.format(arrow.get(last_modified).humanize())),
+             html.H3('Week: {} - {}'.format(arrow.get(start_week).format('ddd, MMM D'), arrow.get(end_week).format('ddd, MMM D'))),
+	     html.H3('Total Units Done This Week: {} of 7'.format(total_units_this_week))
          ]),
          html.Div(children=grade_widgets())
      ],
      className="row"
 )
-
+server = app.server
 if __name__ == '__main__':
-    app.run_server(debug=True, host='10.20.100.203')
+    app.run_server(debug=True, host='10.20.5.50', port=8050, extra_files=['./data.json'])
