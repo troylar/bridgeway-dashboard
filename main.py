@@ -35,6 +35,7 @@ completion = []
 done = {}
 today_d = []
 week_d = []
+total_plus_b = 0
 for subject in subjects:
     s = data[subject]
     done[subject] = {}
@@ -42,11 +43,16 @@ for subject in subjects:
     done[subject]['day'] = 0
     assignments = s['assignments']
     try:
-        grades.append(int(data[subject]['grade']))
+       grade = int(data[subject]['grade']) 
+       if grade >= 80:
+	  total_plus_b = total_plus_b + 1
+       grades.append(grade)
     except ValueError:
         grades.append(0)
+
     try:
-        completion.append(int(data[subject]['percentage'].strip('%')))
+        percent = int(data[subject]['percentage'].strip('%'))
+        completion.append(percent)
     except ValueError:
         completion.append(0)
     latest_date = parse('1/1/2000')
@@ -150,9 +156,10 @@ app.layout = html.Div(children=
      [
          html.Div(children=[
              html.H1("Chloe's School Year 2018-2019"),
-             html.H4('Last Updated: {}'.format(arrow.get(last_modified).humanize())),
+             html.H4('Last Updated: {}'.format(arrow.get(last_modified))),
              html.H3('Week: {} - {}'.format(arrow.get(start_week).format('ddd, MMM D'), arrow.get(end_week).format('ddd, MMM D'))),
-	     html.H3('Total Units Done This Week: {} of 7'.format(total_units_this_week))
+	     html.H3('Total Units Done This Week: {} of 7'.format(total_units_this_week)),
+	     html.H3('Required B\'s: {} of {}'.format(total_plus_b, len(subjects)))
          ]),
          html.Div(children=grade_widgets())
      ],
