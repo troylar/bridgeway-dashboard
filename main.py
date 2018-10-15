@@ -96,10 +96,13 @@ for subject in subjects:
     s['latest_date'] = latest_date
     s['latest_unit'] = 0
     s['highest_unit'] = highest_unit
+    total_units_today = 0
     total_units_this_week = 0
     for unit in completed_units:
         if completed_units[unit]:
             s['latest_unit'] = unit
+            if unit_done_dates[unit] == today:
+                total_units_today = total_units_today + 1
             if unit_done_dates[unit] < end_week and unit_done_dates[unit] > start_week:
                 s['units_this_week'] = s['units_this_week'] + 1
                 total_units_this_week = total_units_this_week + 1
@@ -149,22 +152,25 @@ def grade_widgets():
         div.append(generate_subject_widget(subject))
     return div
 
+def render_layout():
+    return html.Div(children=
+	     [
+		 html.Div(children=[
+		     html.H1("Chloe's School Year 2018-2019"),
+		     html.H4('Last Updated: {}'.format(arrow.get(last_modified).humanize())),
+		     html.H3('Week: {} - {}'.format(arrow.get(start_week).format('ddd, MMM D'), arrow.get(end_week).format('ddd, MMM D'))),
+		     html.H3('Total Units Done Today: {}'.format(total_units_today)),
+		     html.H3('Total Units Done This Week: {} of 7'.format(total_units_this_week)),
+		     html.H3('Required B\'s: {} of {}'.format(total_plus_b, len(subjects)))
+		 ]),
+		 html.Div(children=grade_widgets())
+	     ],
+	     className="row"
+	)
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.css.append_css({"external_url": 'https://fonts.googleapis.com/css?family=Roboto'})
-app.layout = html.Div(children=
-     [
-         html.Div(children=[
-             html.H1("Chloe's School Year 2018-2019"),
-             html.H4('Last Updated: {}'.format(arrow.get(last_modified))),
-             html.H3('Week: {} - {}'.format(arrow.get(start_week).format('ddd, MMM D'), arrow.get(end_week).format('ddd, MMM D'))),
-	     html.H3('Total Units Done This Week: {} of 7'.format(total_units_this_week)),
-	     html.H3('Required B\'s: {} of {}'.format(total_plus_b, len(subjects)))
-         ]),
-         html.Div(children=grade_widgets())
-     ],
-     className="row"
-)
+app.layout = render_layout
 server = app.server
 if __name__ == '__main__':
     app.run_server(debug=True, host='10.20.5.50', port=8050, extra_files=['./data.json'])
