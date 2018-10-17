@@ -10,14 +10,13 @@ import time
 from dateutil.parser import parse
 import re
 
-
 ignore_subjects = [u'WordBuild Elements 1',
                    u'Personal and Family Finance',
                    u'Orientation - High School Stud',
                    u'Chinese Mandarin Course 2',
                    u'HS Physical Education',
                    u'State History Report']
-today = date.today() 
+today = date.today()
 offset = (today.weekday() - 3) % 7
 start_week = today - timedelta(days=offset)
 end_week = start_week + datetime.timedelta(6)
@@ -36,6 +35,8 @@ done = {}
 today_d = []
 week_d = []
 total_plus_b = 0
+total_units_this_week = 0
+total_units_today = 0
 for subject in subjects:
     s = data[subject]
     done[subject] = {}
@@ -43,9 +44,9 @@ for subject in subjects:
     done[subject]['day'] = 0
     assignments = s['assignments']
     try:
-       grade = int(data[subject]['grade']) 
+       grade = int(data[subject]['grade'])
        if grade >= 80:
-	  total_plus_b = total_plus_b + 1
+          total_plus_b = total_plus_b + 1
        grades.append(grade)
     except ValueError:
         grades.append(0)
@@ -96,8 +97,6 @@ for subject in subjects:
     s['latest_date'] = latest_date
     s['latest_unit'] = 0
     s['highest_unit'] = highest_unit
-    total_units_today = 0
-    total_units_this_week = 0
     for unit in completed_units:
         if completed_units[unit]:
             s['latest_unit'] = unit
@@ -107,6 +106,7 @@ for subject in subjects:
                 s['units_this_week'] = s['units_this_week'] + 1
                 total_units_this_week = total_units_this_week + 1
     s['completion_date'] = arrow.now().shift(weeks=+(highest_unit - int(s['latest_unit'])))
+
 
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
