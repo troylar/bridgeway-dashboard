@@ -117,6 +117,7 @@ for subject in subjects:
     s['completion_date'] = arrow.now().shift(weeks=+(highest_unit - int(s['latest_unit'])))
     data_frame[subject].append(arrow.get(latest_date).shift(hours=+1).humanize())
     data_frame[subject].append('{} of {} ({})'.format(s['latest_unit'], s['highest_unit'], s['percentage']))
+    data_frame[subject].append('{}'.format(s['completion_date'].format('MMM D, YYYY')))
     data_frame[subject].append(done[subject]['day'])
     data_frame[subject].append(done[subject]['week'])
     data_frame[subject].append(s['units_today'])
@@ -130,6 +131,7 @@ def generate_table(data, max_rows=100):
                                                 'Grade',
                                                 'Latest Activity',
                                                 'Highest Unit',
+                                                'Est Complete Date',
                                                 'Items Done Today',
                                                 'Items Done This Week',
                                                 'Units Done Today',
